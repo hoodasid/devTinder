@@ -8,8 +8,26 @@ const app = express();
 // app.put will match only to put req made to api and will execute the callback function
 // app.delete will match only to delete req made to api and will execute the callback function
 // app.patch will match only to patch req made to api and will execute the callback function
+// in routes /abc will match anything that starts with /abc and will execute the callback function
+// and /ab?c will match anything that starts with /ab and ends with c and will execute the callback function
+// and /ab+c will match anything that starts with /ab and has one or more b and end with c will execute the callback function
+// and /ab*c will match anything that starts with /a and ends with c and has zero or more b in between will execute the callback function
+// and /ab|cd will match anything that starts with /a and ends with c or starts with /c and ends with d will execute the callback function
+// and and /ab{2,4}c will match anything that starts with /a and ends with c and has 2 to 4 b in between will execute the callback function
+// and /a(bc)?d will match anything that starts with /a and ends with d and has zero or one occurrence of bc in between will execute the callback function
+// req.query will give us the query parameters in the url as an object
 
-app.get("/test", (req, res) => {
+
+
+app.get(/^\/a(bc)d$/, (req, res) => {
+    res.send("Data retrieved successfully from /abc endpoint");
+});
+
+app.get("/test/:userID/:userName/:userPass", (req, res) => {
+        // this will log the query parameters in the url as an object, for example if the url is /test/123?name=John&age=30 then it will log { name: 'John', age: '30' }
+        console.log(req.query);
+        //this will match to any req made to /test endpoint with any dynamic userID and will execute the callback function
+        console.log(req.params);
     res.send("Data retrieved successfully from /test endpoint");
 });
 
