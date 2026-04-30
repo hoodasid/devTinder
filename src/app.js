@@ -1,5 +1,5 @@
 const express = require('express');
-const { adminAuth } = require('./middlewares/auth');
+const { adminAuth, userAuth } = require('./middlewares/auth');
 const app = express();
 
 // app.use will match to any req made to api i.e.e get, post, put, delete etc. and will execute the callback function
@@ -31,7 +31,7 @@ app.get(/^\/a(bc)d$/, (req, res) => {
     res.send("Data retrieved successfully from /abc endpoint");
 });
 
-app.get("/test/:userID/:userName/:userPass", (req, res, next) => {
+app.get("/test/:userID/:userName/:userPass", userAuth,(req, res, next) => {
     // this will log the query parameters in the url as an object, for example if the url is /test/123?name=John&age=30 then it will log { name: 'John', age: '30' }
     console.log(req.query);
     //this will match to any req made to /test endpoint with any dynamic userID and will execute the callback function
@@ -67,8 +67,22 @@ app.use("/hello", (req, res) => {
     res.send("Hello World from /hello endpoint");
 })
 
-app.use("/", (req, res) => {
-    res.send("Home page");
+app.get("/getUserData", (req, res) => {
+   try {
+    throw new Error("This is a test error");
+    res.send("Data retrieved successfully from /getUserData endpoint");
+   } catch (error) {
+    console.log(error);
+    res.status(500).send("Internal Server Error from /getUserData endpoint");
+   }
+});
+
+app.use("/", (err, req, res, next) => {
+    if (err) {
+        console.log(err);
+        res.status(500).send("Internal Server Error");
+    }
+    // res.send("Home page");
 })
 
 app.listen(3000, () => {
