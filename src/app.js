@@ -1,6 +1,9 @@
 const express = require('express');
 const { adminAuth, userAuth } = require('./middlewares/auth');
 const app = express();
+const connectDB = require('./config/database');
+const User = require('./models/user');
+
 
 // app.use will match to any req made to api i.e.e get, post, put, delete etc. and will execute the callback function
 // app.get will match only to get req made to api and will execute the callback function
@@ -20,73 +23,27 @@ const app = express();
 // there can be multiple route handlers for a single route and they will be executed in the order they are defined in the code
 // next() function is used to move to the next route handler in the order they are defined in the code
 
-app.use("/admin", adminAuth);
 
-app.use("/admin", (req, res) => {
-    console.log("This is the second route handler for /admin endpoint");
-    res.send("Hello World from /admin endpoint");
+app.post("/register", async (req, res) => {
+
+    const userObj = { firstName: "Siddharth", lastName: "Hooda", email: "siddharth.hooda@example.com", password: "password123", age: 25, gender: "Male" };
+
+    // creating a new instance of the user model and passing the userObj to it which will create a new user document in the database
+    const user = new User(userObj);
+    await user.save()
+    res.send("User registered successfully");
 });
 
-app.get(/^\/a(bc)d$/, (req, res) => {
-    res.send("Data retrieved successfully from /abc endpoint");
-});
+connectDB().then(() => {
+    console.log("DB connection established...")
 
-app.get("/test/:userID/:userName/:userPass", userAuth,(req, res, next) => {
-    // this will log the query parameters in the url as an object, for example if the url is /test/123?name=John&age=30 then it will log { name: 'John', age: '30' }
-    console.log(req.query);
-    //this will match to any req made to /test endpoint with any dynamic userID and will execute the callback function
-    console.log(req.params);
-    // res.send("Data retrieved successfully from /test endpoint");
-    next();
-}, (req, res) => {
-    console.log("This is the second route handler for /test endpoint");
-    res.send("Data retrieved successfully from /test endpoint in second route handler");
-});
+    app.use("/admin", adminAuth);
 
-app.post("/test", (req, res) => {
-    res.send("Data posted successfully to /test endpoint");
-});
+    app.listen(3000, () => {
+        console.log('Server is running on port 3000');
+    });
 
-app.put("/test", (req, res) => {
-    res.send("Data updated successfully at /test endpoint");
-});
-
-app.delete("/test", (req, res) => {
-    res.send("Data deleted successfully from /test endpoint");
-});
-
-app.patch("/test", (req, res) => {
-    res.send("Data patched successfully at /test endpoint");
-});
-
-app.use("/test", (req, res) => {
-    res.send("Hello World from /test endpoint");
+    console.log("Starting a new project");
+}).catch(() => {
+    console.error("DB cannot be connected!!")
 })
-
-app.use("/hello", (req, res) => {
-    res.send("Hello World from /hello endpoint");
-})
-
-app.get("/getUserData", (req, res) => {
-   try {
-    throw new Error("This is a test error");
-    res.send("Data retrieved successfully from /getUserData endpoint");
-   } catch (error) {
-    console.log(error);
-    res.status(500).send("Internal Server Error from /getUserData endpoint");
-   }
-});
-
-app.use("/", (err, req, res, next) => {
-    if (err) {
-        console.log(err);
-        res.status(500).send("Internal Server Error");
-    }
-    // res.send("Home page");
-})
-
-app.listen(3000, () => {
-    console.log('Server is running on port 3000');
-});
-
-console.log("Starting a new project");
