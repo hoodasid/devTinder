@@ -4,34 +4,80 @@ const app = express();
 const connectDB = require('./config/database');
 const User = require('./models/user');
 
-
-// app.use will match to any req made to api i.e.e get, post, put, delete etc. and will execute the callback function
-// app.get will match only to get req made to api and will execute the callback function
-// app.post will match only to post req made to api and will execute the callback function
-// app.put will match only to put req made to api and will execute the callback function
-// app.delete will match only to delete req made to api and will execute the callback function
-// app.patch will match only to patch req made to api and will execute the callback function
-// in routes /abc will match anything that starts with /abc and will execute the callback function
-// and /ab?c will match anything that starts with /ab and ends with c and will execute the callback function
-// and /ab+c will match anything that starts with /ab and has one or more b and end with c will execute the callback function
-// and /ab*c will match anything that starts with /a and ends with c and has zero or more b in between will execute the callback function
-// and /ab|cd will match anything that starts with /a and ends with c or starts with /c and ends with d will execute the callback function
-// and and /ab{2,4}c will match anything that starts with /a and ends with c and has 2 to 4 b in between will execute the callback function
-// and /a(bc)?d will match anything that starts with /a and ends with d and has zero or one occurrence of bc in between will execute the callback function
-// req.query will give us the query parameters in the url as an object
-// function inside the api req is known as route handler and it will execute when the route is matched plus it is also called as controller in MVC (Model-View-Controller) architecture
-// there can be multiple route handlers for a single route and they will be executed in the order they are defined in the code
-// next() function is used to move to the next route handler in the order they are defined in the code
+// converts the incoming request body to json format and makes it available in req.body
+app.use(express.json());
 
 
 app.post("/register", async (req, res) => {
 
-    const userObj = { firstName: "Siddharth", lastName: "Hooda", email: "siddharth.hooda@example.com", password: "password123", age: 25, gender: "Male" };
+    // console.log(req.body);
+    const userObj = req.body;
 
     // creating a new instance of the user model and passing the userObj to it which will create a new user document in the database
     const user = new User(userObj);
-    await user.save()
-    res.send("User registered successfully");
+    try {
+        await user.save()
+        res.send("User registered successfully");
+    } catch (error) {
+        console.log(error);
+        res.status(400).send("Error saving user to database" + error.message);
+    }
+});
+
+app.delete("/deleteUser", async (req, res) => {
+    const email = req.body.email;
+    try {
+        const user = await User.findOneAndDelete({email: email});
+        if(user) {
+            res.send("User deleted successfully with email: " + email); 
+        } else {
+            res.status(404).send("User not found with email: " + email);
+        }
+    } catch (error) {
+        console.log(error);
+        res.status(500).send("Error deleting user from database" + error.message);
+    }
+});
+
+app.patch("/updateUser", async (req, res) => {
+    const email = req.body.email;
+    const updateObj = req.body.updateObj;
+    try {
+        const user = await User.findOneAndUpdate({email: email}, updateObj, {new: true});
+        if(user) {
+            res.send("User updated successfully with email: " + email + " and updated user data is: " + user);  
+        } else {
+            res.status(404).send("User not found with email: " + email);
+        }
+    } catch (error) {
+        console.log(error);
+        res.status(500).send("Error updating user in database" + error.message);
+    }
+});
+
+app.get("/userByEmail", async (req, res) => {
+    const email = req.body.email;
+    try {
+        const user = await User.find({email: email});
+        if(user.length === 0) {
+            return res.status(404).send("User not found with email: " + email);
+        } else {
+            res.send(user);
+        }
+    } catch (error) {
+        console.log(error);
+        res.status(500).send("Error fetching user from database" + error.message);
+    }
+});
+
+app.get("/users", async (req, res) => {
+    try {
+        const users = await User.find();
+        res.json(users);
+    } catch (error) {
+        console.log(error);
+        res.status(500).send("Error fetching users from database" + error.message);
+    }
 });
 
 connectDB().then(() => {
